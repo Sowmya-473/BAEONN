@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ========== CONFIG ==========
-SCRAPINGBEE_API_KEY = "scrapingbee_api_key"
-GEMINI_API_KEY = "gemini_api_key"
+SCRAPINGBEE_API_KEY = "91MTRMEPQ9CLWBLXBSCQWU5K6TOS30V5DO170ESFW9I3NUVSEETLHHALG4K3AH6I0J19RROVPWUOVUJR"
+GEMINI_API_KEY = "AIzaSyA5uloZTUjh6H8ugIdQ-Vv5lfmdmaEKn7o"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-SERPAPI_KEY = "serpAPI_key"
+SERPAPI_KEY = "3000577a133a3a61853330a41887fca8573b59e93b3abbb8da0bf9560f259782"
 
 # ========== LOGGER ==========
 logging.basicConfig(level=logging.INFO)
@@ -171,6 +171,17 @@ def extract_amazon_products(html: str) -> List[Dict[str, any]]:
     return products
 
 # ========== RECOMMEND ==========
+import math
+
+def compute_relevance_score(R, N, P, alpha=1.0, beta=1.0, gamma=1.0):
+    try:
+        r_component = (R / 5) ** alpha
+        n_component = math.log10(N + 1) ** beta
+        p_component = (1 / math.sqrt(P)) ** gamma
+        return r_component * n_component * p_component
+    except:
+        return 0.0
+
 def recommend_products(query: str, budget: int, profile: dict):
     print(f"\nSearching for '{query}'...\n")
     try:
@@ -188,17 +199,22 @@ def recommend_products(query: str, budget: int, profile: dict):
             base_title = p['title'].split('(')[0].strip().lower()
             if base_title not in unique_titles:
                 unique_titles.add(base_title)
+                p['num_ratings'] = p.get('num_ratings', 500)
+                p['relevance_score'] = compute_relevance_score(
+                    R=p['rating'],
+                    N=p['num_ratings'],
+                    P=p['price']
+                )
                 deduped_products.append(p)
 
-        primary_filtered = [p for p in deduped_products if 4.4 <= p['rating'] <= 5.0 and (budget * 0.9) <= p['price'] <= budget]
+        filtered = [p for p in deduped_products if 3.8 <= p['rating'] <= 5.0 and (budget * 0.85) <= p['price'] <= (budget * 1.1)]
 
-        if not primary_filtered:
-            fallback_filtered = [p for p in deduped_products if 3.8 <= p['rating'] <= 5.0 and (budget * 0.85) <= p['price'] <= (budget * 1.1)]
-            filtered = sorted(fallback_filtered, key=lambda x: x['rating'], reverse=True)[:5]
-        else:
-            filtered = sorted(primary_filtered, key=lambda x: x['rating'], reverse=True)[:5]
+        if not filtered:
+            print("⚠️ No relevant products found within your budget.")
+            return
 
-        top_products = sorted(filtered, key=lambda x: x['rating'], reverse=True)[:5]
+        top_products = sorted(filtered, key=lambda x: x['relevance_score'], reverse=True)[:5]
+
         print("\nTop Recommended Products:\n")
         for i, product in enumerate(top_products, 1):
             short_title = product['title'].split(",")[0]
@@ -210,12 +226,12 @@ def recommend_products(query: str, budget: int, profile: dict):
             product_link = get_serpapi_link(short_title)
 
             print(f"{i}. {short_title}")
+            print(f"   Price: {price_str} | Rating: {rating} | Source: {source}")
             print(f"   Reason: {reason}")
-            print(f"   Check it out: {product_link}\n")
+            print(f"   🛒 [Check it out]({product_link})\n")
 
             if image_url:
                 display(Image(url=image_url))
-
     except Exception as e:
         print(f"Error: {e}")
 
