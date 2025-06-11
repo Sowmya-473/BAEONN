@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ========== CONFIG ==========
-SCRAPINGBEE_API_KEY = "91MTRMEPQ9CLWBLXBSCQWU5K6TOS30V5DO170ESFW9I3NUVSEETLHHALG4K3AH6I0J19RROVPWUOVUJR"
-GEMINI_API_KEY = "AIzaSyA5uloZTUjh6H8ugIdQ-Vv5lfmdmaEKn7o"
+SCRAPINGBEE_API_KEY = "api_key"
+GEMINI_API_KEY = "api_key"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-SERPAPI_KEY = "3000577a133a3a61853330a41887fca8573b59e93b3abbb8da0bf9560f259782"
+SERPAPI_KEY = "api_key"
 
 # ========== LOGGER ==========
 logging.basicConfig(level=logging.INFO)
